@@ -1,169 +1,169 @@
-# 3. Konfiguracja MariaDB
+#  3. Configuração do MariaDB
 
-### 3.1 Domyślna konfiguracja
+###  3.1 Configuração padrão
 
-Domyślna konfiguracja MariaDB zazwyczaj używa około 400 MB RAM.
+A configuração padrão do MariaDB normalmente usa cerca de 400 MB de RAM.
 
-Jest ustawione wiele limitów, które nie pozwalają na wykonanie obliczeń w RAM i
-wiele zapytań do bazy kończy się utworzeniem 'tymczasowego pliku na dysku' -
-co bardzo spowalnia działanie MariaDB.
-Dodatkowo z domyślną konfiguracją dane są zazwyczaj ładowane z dysku.
+Existem muitos limites definidos que impedem a computação em RAM e
+muitas consultas ao banco de dados resultam na criação de um 'arquivo temporário em disco' -
+o que deixa o MariaDB muito lento.
+Além disso, com a configuração padrão, os dados geralmente são carregados do disco.
 
-Jeśli masz na serwerze trochę wolnego RAMu, to warto to zmienić.
+Se você tiver alguma RAM sobressalente em seu servidor, vale a pena mudar.
 
-### 3.2 Optymalizacja - edycja konfiguracji
+###  3.2 Otimização - configuração de edição
 
-Optymalizacja konfiguracji MariaDB jest bardzo złożona.
-Poniżej przykładowa konfiguracja opracowana dla dużych OTSów.
+Otimizar uma configuração do MariaDB é muito complexo.
+Abaixo está um exemplo de configuração desenvolvido para grandes OTSs.
 
-__UWAGA!__
-Jeśli chcesz optymalizować bazę danych już działającego OTSa,
-to najpierw zrób kopię zapasową!
+__CUIDADO!__
+Se você deseja otimizar o banco de dados de um OTS já em operação,
+então volte primeiro!
 
-Konfiguracja MariaDB w Ubuntu 20.04 jest w pliku:
-```
+A configuração do MariaDB no Ubuntu 20.04 está no arquivo:
+``
 /etc/mysql/mariadb.conf.d/50-server.cnf
-```
-Przykład zmian w konfiguracji, po których MariaDB powinna używać 4-8 GB RAM.
-Zalecana dla każdego serwera z 16 GB RAM i więcej.
+``
+Exemplo de alterações de configuração após as quais o MariaDB deve usar 4-8 GB de RAM.
+Recomendado para qualquer servidor com 16 GB de RAM e mais.
 
-#### 3.2.1 Zmiana podstawowych limitów
+####  3.2.1 Alterando os Limites Básicos
 
-Znajdź:
-```
-#key_buffer_size        = 16M
-#max_allowed_packet     = 16M
-#thread_stack           = 192K
-#thread_cache_size      = 8
-```
-Odkomentuj i zamień wartości na:
-```
-key_buffer_size        = 512M
-max_allowed_packet     = 512M
-thread_stack           = 1M
-thread_cache_size      = 128
-```
+Achar:
+``
+#key_buffer_size = 16 milhões
+#max_allowed_packet = 16M
+#thread_stack = 192K
+#thread_cache_size = 8
+``
+Descomente e substitua os valores por:
+``
+key_buffer_size = 512 milhões
+max_allowed_packet = 512M
+thread_stack = 1M
+thread_cache_size = 128
+``
 
-#### 3.2.2 Zmiana limitów otwartych połączeń i tabel
+####  3.2.2 Alterar limites para conexões e tabelas abertas
 
-Ustawiamy wysokie wartości, których serwer nie powinien nigdy osiągnąć. 
+Definimos valores altos que o servidor nunca deve atingir.
 
-Znajdź:
-```
-#max_connections        = 100
-#table_cache            = 64
-```
-Odkomentuj i zamień wartości na:
-```
-max_connections        = 50000
-table_cache            = 50000
-```
+Achar:
+``
+#max_connections = 100
+#table_cache = 64
+``
+Descomente e substitua os valores por:
+``
+max_connections = 50.000
+table_cache = 50000
+``
 
-#### 3.2.3 Zmiana limitów zapytań przetwarzanych w RAM
+####  3.2.3 Alterando os limites das consultas processadas na RAM
 
-Dodaj:
-```
-max_heap_table_size     = 1G
-tmp_table_size          = 1G
+Adicionar:
+``
+max_heap_table_size = 1G
+tmp_table_size = 1G
 bulk_insert_buffer_size = 1G
-```
+``
 
-#### 3.2.4 Zmiana limitów dla InnoDB
+####  3.2.4 Mudando os limites do InnoDB
 
-InnoDB to silnik MariaDB, który jest używany przez bazę danych OTSa.
+InnoDB é o mecanismo MariaDB que é usado pelo banco de dados OTSa.
 
-Te zmiany mają największy wpływ na czas zapisu OTSa.
+Essas mudanças têm o maior impacto no tempo de gravação do OTSa.
 
-Dodaj:
-```
+Adicionar:
+``
 innodb_file_per_table = 1
 innodb_buffer_pool_size = 4G
 innodb_buffer_pool_instances = 8
 innodb_log_file_size = 512M
 innodb_log_buffer_size = 256M
 innodb_flush_log_at_trx_commit = 2
-```
+``
 
-#### 3.2.5 SQL mode - problemy z acc. makerami
+####  3.2.5 Modo SQL - seg. fabricantes
 
-Acc. makery, np. Gesior2012 nie trzymają się standardu SQL.
-Przez wiele lat nie było to problemem,
-bo domyślne ustawienia pozwalały łamać niektóre zasady SQLa.
-W nowym MySQL i MariaDB to się zmieniło.
+Ace. fabricantes, como Gesior2012, não seguem o padrão SQL.
+Por muitos anos não foi um problema
+porque as configurações padrão permitiam quebrar algumas regras SQL.
+Isso mudou no novo MySQL e MariaDB.
 
-Na szczęście można przestawić tryb działania, na taki jak był wcześniej,
-dodając w konfiguracji linijkę:
-```
-sql_mode=''
-```
-#### 3.2.6 Restart MariaDB
+Felizmente, você pode mudar o modo de operação para o mesmo que era antes,
+adicionando uma linha na configuração:
+``
+sql_mode = ''
+``
+####  3.2.6 Reinicie o MariaDB
 
-Aby zmiany w konfiguracji zaczęły działać, należy zrestartować MariaDB:
-```
-systemctl restart mysql
-```
-(tak, piszemy `mysql`, a restartuje się MariaDB)
+Você deve reiniciar o MariaDB para que as alterações de configuração tenham efeito:
+``
+systemctl reiniciar mysql
+``
+(sim, escrevemos `mysql` e MariaDB reinicia)
 
-### 3.3 Dostęp do bazy
+###  3.3 Acesso ao banco de dados
 
-Domyślnie baza MariaDB jest dostępna z konsoli z użytkownika `root` bez hasła.
-Musimy zmienić dostęp do użytkownika tak, żeby móc logować się hasłem.
+Por padrão, MariaDB é acessível a partir do console com o usuário `root` sem senha.
+Precisamos alterar o acesso ao usuário para que possamos fazer login com a senha.
 
-W przykładzie ustawimy hasło do użytkownika `root` na `secretpass`.
+No exemplo, definiremos a senha do usuário ` root` para ` secretpass` .
 
-#### 3.3.1 Logowanie hasłem
+####  3.3.1 Login com senha
 
-Odpal:
-```
+Acender:
+``
 mysql
-```
-Odpali sie konsola serwera MariaDB.
+``
+O console do servidor MariaDB travou.
 
-Odpal po kolei:
-1. Wybierz bazę zawierającą użytkowników:
-```
-use mysql;
-```
-2. Zmienia typ logowania z `unix_socket`
-(logowanie na podstawie użytkownika z konsoli)
-na logowanie hasłem:
-```
-UPDATE `user` SET `plugin` = 'mysql_native_password' WHERE `user` = 'root' AND `host` = 'localhost';
-```
-3. Ustaw hasło użytkownika `root` na `secretpass`:
-```
-SET PASSWORD FOR 'root'@'localhost' = PASSWORD('secretpass');
-```
-4. Przeładuj ustawienia użytkowników MariaDB:
-```
-flush privileges;
-```
-5. Wyłącz konsole MariaDB (można też kliknąć CTRL+D)
-```
-exit
-```
+Fogo por sua vez:
+1. Selecione o banco de dados que contém os usuários:
+``
+usar mysql;
+``
+2. Altere o tipo de login de `unix_socket`
+(login baseado no usuário do console)
+para entrar com uma senha:
+``
+UPDATE `user` SET` plugin` = 'mysql_native_password' WHERE `user` = 'root' AND` host` = 'localhost';
+``
+3. Defina a senha do usuário `root` para ` secretpass` :
+``
+SET PASSWORD FOR 'root' @ 'localhost' = PASSWORD ('secretpass');
+``
+4. Recarregue as configurações de usuário do MariaDB:
+``
+privilégios de descarga;
+``
+5. Desative os consoles MariaDB (você também pode clicar em CTRL + D)
+``
+saída
+``
 
-#### 3.3.2 Automatycznie logowanie z konsoli
+####  3.3.2 Login automático do console
 
-Po ustawieniu hasła, żeby zalogować się do MariaDB z konsoli, trzeba wpisać:
-```
+Depois de definir uma senha, para fazer login no MariaDB a partir do console, você precisa digitar:
+``
 mysql -p
-```
-a następnie wpisać hasło.
+``
+e, em seguida, digite a senha.
 
-Hasło można wpisać w konfiguracji MariaDB.
-Po tej zmianie komendy `mysql` i `mysqldump` nie będą wymagały wpisywania hasła.
+A senha pode ser inserida na configuração do MariaDB.
+Com esta mudança, os comandos `mysql` e ` mysqldump` não exigirão mais uma senha .
 
-Edytuj plik:
-```
+Edite o arquivo:
+``
 /etc/mysql/mariadb.conf.d/50-client.cnf
-```
-Pod:
-```
-[client]
-```
-Dodaj linijkę:
-```
-password=secretpass
-```
-Po tej zmianie znowu można używać `mysql` (bez ` -p`) i nie podawać hasła.
+``
+Debaixo:
+``
+[cliente]
+``
+Adicione uma linha:
+``
+senha = senha secreta
+``
+Após esta alteração, é possível usar `mysql` ( sem` -p` ) novamente e não digitar uma senha.
