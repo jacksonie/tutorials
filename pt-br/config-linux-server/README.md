@@ -1,7 +1,7 @@
-# Konfiguracja serwera Linux
+#  Configuração do servidor Linux
 
-Podstawowa konfiguracja dla serwera z Ubuntu 20.04:
-- instalacja nginx, PHP i MariaDB
-- optymalizacja MariaDB
-- konfiguracja nginx i PHP
-- konfiguracja Linux
+Configuração básica para um servidor com Ubuntu 20.04:
+- instalação do nginx, PHP e MariaDB
+- Otimização MariaDB
+- configuração do nginx e do PHP
+- Configuração Linux
